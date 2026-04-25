@@ -8,98 +8,114 @@
 # ==============================================================================
 
 import pandas as pd
-import awswrangler as wr # Biblioteca para se conectar com a AWS
+import awswrangler as wr
 import boto3 
 
-# Configuracao dos caminhos do S3
-BUCKET_RAW_TECH = 
-BUCKET_RAW_RETAIL = 
+# ==============================================================================
+# 1. CONFIGURAÇÃO DE AMBIENTE (CAMINHOS S3)
+# ==============================================================================
 
-# Caminhos de destino para os dados processados em formato Parquet
-BUCKET_OUT_TECH = 
-BUCKET_OUT_RETAIL = 
-BUCKET_OUT_FINAL = 
+# Fontes Raw (Dados Brutos)
+BUCKET_RAW_TECH = "s3://guilherme-holding/nexus-tech/raw/tech_nexus.csv"
+BUCKET_RAW_RETAIL = "s3://guilherme-holding/nexus-retail/raw/retail_nexus.csv"
+
+# Camada Silver (Dados Processados e Limpos)
+BUCKET_OUT_TECH = "s3://guilherme-holding/nexus-tech/processed/"
+BUCKET_OUT_RETAIL = "s3://guilherme-holding/nexus-retail/processed/"
+BUCKET_OUT_FINAL = "s3://guilherme-holding/guilherme_consolidado/gold_zone/"
+
+# Camada Gold (Visões de Negócio)
+BUCKET_GOLD_DIRETORIA = "s3://guilherme-holding/Diretoria/gold/"
+BUCKET_GOLD_RH = "s3://guilherme-holding/rh/gold/"
+BUCKET_GOLD_FINANCEIRO = "s3://guilherme-holding/financeiro/gold/"
 
 try:
-    # ==========================================
-    # 1. CARGA DOS DADOS (AGORA VIA S3)
-    # ==========================================
-    # Leitura dos arquivos brutos diretamente do S3 usando AWS Data Wrangler
+    # ==========================================================================
+    # 2. INGESTÃO E LIMPEZA INICIAL
+    # ==========================================================================
+   
     df_tech = wr.s3.read_csv(path=BUCKET_RAW_TECH)
     df_retail = wr.s3.read_csv(path=BUCKET_RAW_RETAIL)
 
-    # ==========================================
-    # 2. LIMPEZA E VALIDACAO: DF_TECH
-    # ==========================================
-    # Conversao de tipos e limpeza de caracteres nao numericos no CPF
-    df_tech['data'] = pd.to_datetime(df_tech['data'])
-    df_tech['valor'] = pd.to_numeric(df_tech['valor'])
-    df_tech['cpf'] = df_tech['cpf'].astype(str).str.replace(r'\D', '', regex=True)
+    # Função interna para tipagem e limpeza rápida
+    def clean_base_df(df):
+        df['data'] = pd.to_datetime(df['data'])
+        cols_numeric = ['quantidade', 'valor_unitario', 'custo_unitario', 'valor_total_transacao']
+        for col in cols_numeric:
+            df[col] = pd.to_numeric(df[col])
+        # Sanitização de CPF (remove caracteres não numéricos)
+        df['cpf_cliente'] = df['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
+        return df.dropna(subset=['id_transacao', 'valor_total_transacao']).drop_duplicates(subset=['id_transacao'])
 
-    # Remocao de valores nulos em colunas criticas e eliminacao de duplicatas
-    df_tech = df_tech.dropna(subset=['id_transacao', 'holding', 'cpf'])
-    df_tech = df_tech.drop_duplicates(subset=['id_transacao'])
+    df_tech = clean_base_df(df_tech)
+    df_retail = clean_base_df(df_retail)
 
-    # Validacao de integridade via Asserts para garantir zero valores nulos
-    assert df_tech['holding'].isna().sum() == 0, f"Encontrado {df_tech['holding'].isna().sum()} NA em holding"
-    assert df_tech['id_transacao'].isna().sum() == 0, f"Encontrado {df_tech['id_transacao'].isna().sum()} NA em id_transacao"
-    assert df_tech['id_cliente'].isna().sum() == 0, f"Encontrado {df_tech['id_cliente'].isna().sum()} NA em id_cliente"
-    assert df_tech['cpf'].isna().sum() == 0, f"Encontrado {df_tech['cpf'].isna().sum()} NA em cpf"
-    assert df_tech['nome_cliente'].isna().sum() == 0, f"Encontrado {df_tech['nome_cliente'].isna().sum()} NA em nome_cliente"
-    assert df_tech['email'].isna().sum() == 0, f"Encontrado {df_tech['email'].isna().sum()} NA em email"
-    assert df_tech['item_vendido'].isna().sum() == 0, f"Encontrado {df_tech['item_vendido'].isna().sum()} NA em item_vendido"
-    assert df_tech['valor'].isna().sum() == 0, f"Encontrado {df_tech['valor'].isna().sum()} NA em valor"
-    assert df_tech['data'].isna().sum() == 0, f"Encontrado {df_tech['data'].isna().sum()} NA em data"
+    # ==========================================================================
+    # 3. DATA QUALITY (VALIDAÇÃO CRÍTICA)
+    # ==========================================================================
+  
+    
+    # Validação Nexus Tech
+    assert df_tech['id_transacao'].isna().sum() == 0, "Falha: ID nulo em Tech"
+    assert (df_tech['valor_total_transacao'] > 0).all(), "Falha: Venda negativa em Tech"
+    check_tech = (df_tech['valor_unitario'] * df_tech['quantidade']) - df_tech['valor_total_transacao']
+    assert (check_tech.abs() < 0.1).all(), "Falha: Divergência matemática em Tech"
 
-    # ==========================================
-    # 3. LIMPEZA E VALIDACAO: DF_RETAIL
-    # ==========================================
-    # Processo de limpeza similar aplicado aos dados de Retail
-    df_retail['cpf'] = df_retail['cpf'].astype(str).str.replace(r'\D', '', regex=True)
-    df_retail['data'] = pd.to_datetime(df_retail['data'])
-    df_retail['valor'] = pd.to_numeric(df_retail['valor'])
+    # Validação Nexus Retail
+    assert df_retail['id_vendedor'].isna().sum() == 0, "Falha: Vendedor nulo em Retail"
+    assert (df_retail['valor_total_transacao'] > 0).all(), "Falha: Venda negativa em Retail"
+    check_retail = (df_retail['valor_unitario'] * df_retail['quantidade']) - df_retail['valor_total_transacao']
+    assert (check_retail.abs() < 0.1).all(), "Falha: Divergência matemática em Retail"
 
-    df_retail = df_retail.dropna(subset=['id_venda'])
-    df_retail = df_retail.drop_duplicates(subset=['id_venda'])
+    # ==========================================================================
+    # 4. TRANSFORMAÇÃO E UNIFICAÇÃO (MODELO STAR SCHEMA)
+    # ==========================================================================
 
-    assert df_retail['holding'].isna().sum() == 0, f"Encontrado {df_retail['holding'].isna().sum()} NA em holding"
-    assert df_retail['id_venda'].isna().sum() == 0, f"Encontrado {df_retail['id_venda'].isna().sum()} NA em id_venda"
-    assert df_retail['id_cliente'].isna().sum() == 0, f"Encontrado {df_retail['id_cliente'].isna().sum()} NA em id_cliente"
-    assert df_retail['cpf'].isna().sum() == 0, f"Encontrado {df_retail['cpf'].isna().sum()} NA em cpf"
-    assert df_retail['nome_cliente'].isna().sum() == 0, f"Encontrado {df_retail['nome_cliente'].isna().sum()} NA em nome_cliente"
-    assert df_retail['email'].isna().sum() == 0, f"Encontrado {df_retail['email'].isna().sum()} NA em email"
-    assert df_retail['item_vendido'].isna().sum() == 0, f"Encontrado {df_retail['item_vendido'].isna().sum()} NA em item_vendido"
-    assert df_retail['valor'].isna().sum() == 0, f"Encontrado {df_retail['valor'].isna().sum()} NA em valor"
-    assert df_retail['data'].isna().sum() == 0, f"Encontrado {df_retail['data'].isna().sum()} NA em data"
+    df_tech_ready = df_tech.copy()
+    df_final = pd.concat([df_tech_ready, df_retail], ignore_index=True)
 
-    # ==========================================
-    # 4. UNIFICACAO DA HOLDING
-    # ==========================================
-    # Padronizacao de nomes de colunas para unificacao dos DataFrames
-    df_tech_ready = df_tech.rename(columns={'id_transacao': 'id_venda'})
-    df_retail_ready = df_retail.copy() 
+    # ==========================================================================
+    # 5. BUSINESS INTELLIGENCE (AGREGAÇÕES GOLD)
+    # ==========================================================================
 
-    # Consolidacao final dos dados tratados
-    df_final = pd.concat([df_tech_ready, df_retail_ready], ignore_index=True)
 
-    # ==========================================
-    # 5. CHECK FINAL E SALVAMENTO NO S3
-    # ==========================================
-    # Ultima camada de seguranca antes da carga final
-    assert df_final['id_cliente'].isna().sum() == 0, "O processo gerou dados nulos em id_cliente"
-    assert df_final['valor'].isna().sum() == 0, "O processo gerou dados nulos em valor"
+    # Visão Financeira: Faturamento e Volume Diário
+    df_financeiro = df_final.groupby(['data', 'holding']).agg({
+        'valor_total_transacao': 'sum',
+        'custo_unitario': 'sum', 
+        'id_transacao': 'count'
+    }).rename(columns={'id_transacao': 'qtd_transacoes', 'valor_total_transacao': 'receita_bruta'}).reset_index()
 
-    # Salvamento dos dados em formato Parquet com modo overwrite para evitar duplicidade
-    wr.s3.to_parquet(df=df_tech, path=BUCKET_OUT_TECH, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_retail, path=BUCKET_OUT_RETAIL, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_final, path=BUCKET_OUT_FINAL, dataset=True, mode="overwrite")
+    # Visão RH: Performance de Vendas e Comissões (5%)
+    df_rh = df_final.groupby(['id_vendedor', 'holding']).agg({
+        'valor_total_transacao': 'sum',
+        'id_transacao': 'count'
+    }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'valor_acumulado'}).reset_index()
+    df_rh['comissao_a_pagar'] = df_rh['valor_acumulado'] * 0.05
 
-# Tratamento de excecoes para erros de validacao ou problemas de conexao AWS
+    # Visão Diretoria/Marketing: Produtos mais vendidos
+    df_marketing = df_final.groupby(['holding', 'item_vendido']).agg({
+        'quantidade': 'sum',
+        'valor_total_transacao': 'sum'
+    }).sort_values(by='quantidade', ascending=False).reset_index()
+
+    # ==========================================================================
+    # 6. PERSISTÊNCIA (STORAGE NO S3 EM PARQUET)
+    # ==========================================================================
+    
+    storage_map = {
+        BUCKET_OUT_TECH: df_tech,
+        BUCKET_OUT_RETAIL: df_retail,
+        BUCKET_OUT_FINAL: df_final,
+        BUCKET_GOLD_DIRETORIA: df_marketing,
+        BUCKET_GOLD_RH: df_rh,
+        BUCKET_GOLD_FINANCEIRO: df_financeiro
+    }
+
+    for path, df_target in storage_map.items():
+        wr.s3.to_parquet(df=df_target, path=path, dataset=True, mode="overwrite")
+
 except Exception as e:
-    if isinstance(e, AssertionError):
-        print(f"ALERTA DE DADO SUJO: {e}")
-    else:
-        print(f"ERRO NA CONEXAO OU PROCESSAMENTO AWS: {e}")
-
+    print(f" ERRO NO PIPELINE: {e}")
 else:
-    print(f"WORKFLOW CONCLUIDO! Dados salvos nos 3 buckets S3 com overwrite.")
+    print(f" WORKFLOW CONCLUÍDO COM SUCESSO!")
