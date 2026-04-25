@@ -12,13 +12,13 @@ import awswrangler as wr # Biblioteca para se conectar com a AWS
 import boto3 
 
 # Configuracao dos caminhos do S3
-BUCKET_RAW_TECH = "s3://guilherme-holding/nexus-tech/raw/vendas_tech1.csv"
-BUCKET_RAW_RETAIL = "s3://guilherme-holding/nexus-retail/raw/vendas_retail1.csv"
+BUCKET_RAW_TECH = 
+BUCKET_RAW_RETAIL = 
 
 # Caminhos de destino para os dados processados em formato Parquet
-BUCKET_OUT_TECH = "s3://guilherme-holding/nexus-tech/processed/"
-BUCKET_OUT_RETAIL = "s3://guilherme-holding/nexus-retail/processed/"
-BUCKET_OUT_FINAL = "s3://guilherme-holding/guilherme_consolidado/gold_zone/"
+BUCKET_OUT_TECH = 
+BUCKET_OUT_RETAIL = 
+BUCKET_OUT_FINAL = 
 
 try:
     # ==========================================
