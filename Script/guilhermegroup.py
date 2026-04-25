@@ -11,111 +11,120 @@ import pandas as pd
 import awswrangler as wr
 import boto3 
 
-# ==============================================================================
-# 1. CONFIGURAÇÃO DE AMBIENTE (CAMINHOS S3)
-# ==============================================================================
-
-# Fontes Raw (Dados Brutos)
+# ==========================================
+# CONFIGURAÇÃO DOS CAMINHOS DE ORIGEM E DESTINO (S3)
+# ==========================================
 BUCKET_RAW_TECH = "s3://guilherme-holding/nexus-tech/raw/tech_nexus.csv"
 BUCKET_RAW_RETAIL = "s3://guilherme-holding/nexus-retail/raw/retail_nexus.csv"
 
-# Camada Silver (Dados Processados e Limpos)
 BUCKET_OUT_TECH = "s3://guilherme-holding/nexus-tech/processed/"
 BUCKET_OUT_RETAIL = "s3://guilherme-holding/nexus-retail/processed/"
 BUCKET_OUT_FINAL = "s3://guilherme-holding/guilherme_consolidado/gold_zone/"
 
-# Camada Gold (Visões de Negócio)
 BUCKET_GOLD_DIRETORIA = "s3://guilherme-holding/Diretoria/gold/"
 BUCKET_GOLD_RH = "s3://guilherme-holding/rh/gold/"
 BUCKET_GOLD_FINANCEIRO = "s3://guilherme-holding/financeiro/gold/"
 
 try:
-    # ==========================================================================
-    # 2. INGESTÃO E LIMPEZA INICIAL
-    # ==========================================================================
-   
+    # ---------------------------------------------------------
+    # 1. CARGA DOS DADOS (INGESTÃO)
+    # ---------------------------------------------------------
     df_tech = wr.s3.read_csv(path=BUCKET_RAW_TECH)
     df_retail = wr.s3.read_csv(path=BUCKET_RAW_RETAIL)
 
-    # Função interna para tipagem e limpeza rápida
-    def clean_base_df(df):
-        df['data'] = pd.to_datetime(df['data'])
-        cols_numeric = ['quantidade', 'valor_unitario', 'custo_unitario', 'valor_total_transacao']
-        for col in cols_numeric:
-            df[col] = pd.to_numeric(df[col])
-        # Sanitização de CPF (remove caracteres não numéricos)
-        df['cpf_cliente'] = df['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
-        return df.dropna(subset=['id_transacao', 'valor_total_transacao']).drop_duplicates(subset=['id_transacao'])
-
-    df_tech = clean_base_df(df_tech)
-    df_retail = clean_base_df(df_retail)
-
-    # ==========================================================================
-    # 3. DATA QUALITY (VALIDAÇÃO CRÍTICA)
-    # ==========================================================================
-  
+    # ---------------------------------------------------------
+    # 2. LIMPEZA E VALIDAÇÃO: DF_TECH
+    # ---------------------------------------------------------
+    # Conversão de tipos para garantir consistência nos cálculos
+    df_tech['data'] = pd.to_datetime(df_tech['data'])
+    df_tech['quantidade'] = pd.to_numeric(df_tech['quantidade'])
+    df_tech['valor_unitario'] = pd.to_numeric(df_tech['valor_unitario'])
+    df_tech['custo_unitario'] = pd.to_numeric(df_tech['custo_unitario'])
+    df_tech['valor_total_transacao'] = pd.to_numeric(df_tech['valor_total_transacao'])
     
-    # Validação Nexus Tech
-    assert df_tech['id_transacao'].isna().sum() == 0, "Falha: ID nulo em Tech"
-    assert (df_tech['valor_total_transacao'] > 0).all(), "Falha: Venda negativa em Tech"
+    # Sanitização: Remove caracteres especiais de CPFs
+    df_tech['cpf_cliente'] = df_tech['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
+
+    # Remoção de registros inválidos e duplicidade de transação
+    df_tech = df_tech.dropna(subset=['id_transacao', 'valor_total_transacao'])
+    df_tech = df_tech.drop_duplicates(subset=['id_transacao'])
+ 
+    # --- VALIDAÇÃO CRÍTICA: DF_TECH (Data Quality) ---
+    assert df_tech['id_transacao'].isna().sum() == 0, "Tech: ID de transação nulo"
+    assert df_tech['id_vendedor'].isna().sum() == 0, "Tech: Venda sem identificação de vendedor"
+    assert (df_tech['valor_total_transacao'] > 0).all(), "Tech: Venda com valor zero ou negativo"
+    assert (df_tech['custo_unitario'] >= 0).all(), "Tech: Custo negativo detectado"
+    
+    # Valida se a multiplicação Unitário x Qtd bate com o Total informado
     check_tech = (df_tech['valor_unitario'] * df_tech['quantidade']) - df_tech['valor_total_transacao']
-    assert (check_tech.abs() < 0.1).all(), "Falha: Divergência matemática em Tech"
+    assert (check_tech.abs() < 0.1).all(), "Tech: Divergência entre Unitário x Qtd e Valor Total"
+    
+    # ---------------------------------------------------------
+    # 3. LIMPEZA E VALIDAÇÃO: DF_RETAIL
+    # ---------------------------------------------------------
+    df_retail['data'] = pd.to_datetime(df_retail['data'])
+    df_retail['quantidade'] = pd.to_numeric(df_retail['quantidade'])
+    df_retail['valor_unitario'] = pd.to_numeric(df_retail['valor_unitario'])
+    df_retail['custo_unitario'] = pd.to_numeric(df_retail['custo_unitario'])
+    df_retail['valor_total_transacao'] = pd.to_numeric(df_retail['valor_total_transacao'])
+    df_retail['cpf_cliente'] = df_retail['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
 
-    # Validação Nexus Retail
-    assert df_retail['id_vendedor'].isna().sum() == 0, "Falha: Vendedor nulo em Retail"
-    assert (df_retail['valor_total_transacao'] > 0).all(), "Falha: Venda negativa em Retail"
+    df_retail = df_retail.dropna(subset=['id_transacao', 'valor_total_transacao'])
+    df_retail = df_retail.drop_duplicates(subset=['id_transacao'])
+
+    # --- VALIDAÇÃO CRÍTICA: DF_RETAIL (Data Quality) ---
+    assert df_retail['valor_total_transacao'].isna().sum() == 0, "Retail: ID de venda nulo"
+    assert df_retail['id_vendedor'].isna().sum() == 0, "Retail: Venda sem identificação de vendedor"
+    assert (df_retail['valor_total_transacao'] > 0).all(), "Retail: Venda com valor zero ou negativo"
+    assert (df_retail['custo_unitario'] >= 0).all(), "Retail: Custo negativo detectado"
+    
     check_retail = (df_retail['valor_unitario'] * df_retail['quantidade']) - df_retail['valor_total_transacao']
-    assert (check_retail.abs() < 0.1).all(), "Falha: Divergência matemática em Retail"
-
-    # ==========================================================================
-    # 4. TRANSFORMAÇÃO E UNIFICAÇÃO (MODELO STAR SCHEMA)
-    # ==========================================================================
-
-    df_tech_ready = df_tech.copy()
+    assert (check_retail.abs() < 0.1).all(), "Retail: Divergência entre Unitário x Qtd e Valor Total"
+    
+    # ---------------------------------------------------------
+    # 4. UNIFICAÇÃO DAS BASES (HOLDING CONSOLIDADA)
+    # ---------------------------------------------------------
+    df_tech_ready = df_tech.copy() 
     df_final = pd.concat([df_tech_ready, df_retail], ignore_index=True)
-
-    # ==========================================================================
-    # 5. BUSINESS INTELLIGENCE (AGREGAÇÕES GOLD)
-    # ==========================================================================
-
-
-    # Visão Financeira: Faturamento e Volume Diário
+    
+    # ---------------------------------------------------------
+    # 5. AGREGAÇÕES PARA ÁREAS DE NEGÓCIO (GOLD TABLES)
+    # ---------------------------------------------------------
+    
+    # FINANCEIRO: Visão de Receita Diária e Volume
     df_financeiro = df_final.groupby(['data', 'holding']).agg({
         'valor_total_transacao': 'sum',
         'custo_unitario': 'sum', 
         'id_transacao': 'count'
     }).rename(columns={'id_transacao': 'qtd_transacoes', 'valor_total_transacao': 'receita_bruta'}).reset_index()
-
-    # Visão RH: Performance de Vendas e Comissões (5%)
+    
+    # RH: Desempenho do Vendedor e Cálculo de Comissão (5%)
     df_rh = df_final.groupby(['id_vendedor', 'holding']).agg({
         'valor_total_transacao': 'sum',
         'id_transacao': 'count'
-    }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'valor_acumulado'}).reset_index()
+    }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'valor_acumulado'}).reset_index() 
+    
     df_rh['comissao_a_pagar'] = df_rh['valor_acumulado'] * 0.05
-
-    # Visão Diretoria/Marketing: Produtos mais vendidos
+    
+    # DIRETORIA / MARKETING: Ranking de itens mais vendidos por unidade
     df_marketing = df_final.groupby(['holding', 'item_vendido']).agg({
         'quantidade': 'sum',
         'valor_total_transacao': 'sum'
     }).sort_values(by='quantidade', ascending=False).reset_index()
 
-    # ==========================================================================
-    # 6. PERSISTÊNCIA (STORAGE NO S3 EM PARQUET)
-    # ==========================================================================
-    
-    storage_map = {
-        BUCKET_OUT_TECH: df_tech,
-        BUCKET_OUT_RETAIL: df_retail,
-        BUCKET_OUT_FINAL: df_final,
-        BUCKET_GOLD_DIRETORIA: df_marketing,
-        BUCKET_GOLD_RH: df_rh,
-        BUCKET_GOLD_FINANCEIRO: df_financeiro
-    }
-
-    for path, df_target in storage_map.items():
-        wr.s3.to_parquet(df=df_target, path=path, dataset=True, mode="overwrite")
+    # ---------------------------------------------------------
+    # 6. SALVAMENTO FINAL NO S3 (FORMATO PARQUET)
+    # ---------------------------------------------------------
+    wr.s3.to_parquet(df=df_tech, path=BUCKET_OUT_TECH, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_retail, path=BUCKET_OUT_RETAIL, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_final, path=BUCKET_OUT_FINAL, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_marketing, path=BUCKET_GOLD_DIRETORIA, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_rh, path=BUCKET_GOLD_RH, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_financeiro, path=BUCKET_GOLD_FINANCEIRO, dataset=True, mode="overwrite")
 
 except Exception as e:
-    print(f" ERRO NO PIPELINE: {e}")
+    # Captura qualquer erro no processo e exibe no log
+    print(f" ERRO: {e}")
 else:
-    print(f" WORKFLOW CONCLUÍDO COM SUCESSO!")
+    # Confirmação de sucesso do pipeline
+    print(f" WORKFLOW CONCLUÍDO!")
