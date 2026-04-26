@@ -50,4 +50,4 @@ Tratamento (Processamento): Um robô lê linha por linha. Ele limpa CPFs digitad
 
 Vitrine (Gold Zone): Os dados aprovados são empacotados em um formato super leve e rápido, sendo separados em pastas específicas. O RH só tem acesso aos dados de RH, e o Financeiro só aos dados do Financeiro.
 ## Autor
-Guilherme - Lead Data Engineer no Guilherme Group
+Guilherme
