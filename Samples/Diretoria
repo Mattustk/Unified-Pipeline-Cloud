@@ -1,7 +1,7 @@
-| holding      | item_vendido         |   quantidade |   valor_total_transacao |
-|:-------------|:---------------------|-------------:|------------------------:|
-| NEXUS RETAIL | Notebook Ultra Slim  |          348 |        1914000.00       |
-| NEXUS RETAIL | Monitor 4K 27 pol    |          339 |         949200          |
-| NEXUS RETAIL | Mouse Gamer Sem Fio  |          312 |         140400          |
-| NEXUS RETAIL | Headset Surround 7.1 |          309 |         275010          |
-| NEXUS RETAIL | PC Gamer Nexus 1.0   |          306 |        2203200.00       |
+| holding      | item_vendido            |   quantidade |   valor_total_transacao |
+|:-------------|:------------------------|-------------:|------------------------:|
+| NEXUS RETAIL | Notebook Ultra Slim     |          348 |        1914000.00       |
+| NEXUS RETAIL | Monitor 4K 27 pol       |          339 |         949200          |
+| NEXUS TECH   | Pentest de Segurança    |          217 |        2061500.0        |
+| NEXUS TECH   | Assinatura SaaS Premium |          199 |         497500.0        |
+| NEXUS TECH   | Assinatura SaaS Standard|          197 |         236400.0        |
