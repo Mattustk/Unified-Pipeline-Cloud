@@ -30,7 +30,7 @@ Segurança: O sistema tem travas de segurança. Se uma venda entrar no sistema s
 
 Entrega Automatizada (Arquivo CSV): O setor recebe automaticamente um arquivo CSV isolado e validado, contendo apenas a folha de comissões pronta para ser processada, sem necessidade de intervenção humana.
 
-
+-------------------------------------------------------------------------
 
 **Para o Financeiro**
 Receita Clara: Um relatório diário mostrando o Faturamento Bruto e o Custo total, unindo o que foi vendido tanto na área de Tecnologia quanto no Varejo.
