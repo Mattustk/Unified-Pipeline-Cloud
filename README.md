@@ -21,6 +21,8 @@ Agora, o sistema faz tudo sozinho e em segundos.
 
 ## O Que Cada Setor Ganha Com Isso? (Entregas do Sistema)
 
+
+
 **Para o RH (Gestão de Pessoas)**
 Sem cálculos manuais: O sistema já cruza as vendas e entrega uma tabela pronta com o total vendido por cada funcionário e o valor exato da comissão de 5% que deve ser paga.
 
@@ -28,12 +30,17 @@ Segurança: O sistema tem travas de segurança. Se uma venda entrar no sistema s
 
 Entrega Automatizada (Arquivo CSV): O setor recebe automaticamente um arquivo CSV isolado e validado, contendo apenas a folha de comissões pronta para ser processada, sem necessidade de intervenção humana.
 
+
+
 **Para o Financeiro**
 Receita Clara: Um relatório diário mostrando o Faturamento Bruto e o Custo total, unindo o que foi vendido tanto na área de Tecnologia quanto no Varejo.
 
 Auditoria: O sistema barra automaticamente vendas com valores negativos ou zerados, garantindo que o balanço financeiro seja 100% real.
 
 Entrega Automatizada (Arquivo CSV): Geração diária de um arquivo CSV de conciliação financeira, entregando os dados blindados e prontos para integração direta com o ERP da holding.
+
+
+
 
 **Para a Diretoria e Marketing**
 Ranking de Sucesso: Uma visão direta de quais produtos (como PCs Gamers ou Consultorias de TI) estão saindo mais, ajudando a focar os investimentos e as campanhas de marketing no que realmente dá lucro.
