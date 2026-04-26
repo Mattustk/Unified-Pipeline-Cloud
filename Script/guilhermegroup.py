@@ -104,7 +104,7 @@ try:
         'id_transacao': 'count'
     }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'valor_acumulado'}).reset_index() 
     
-    df_rh['comissao_a_pagar'] = df_rh['valor_acumulado'] * 0.05
+    df_rh['comissao_a_pagar'] = df_rh['valor_acumulado'] * 0.01
     
     # DIRETORIA / MARKETING: Ranking de itens mais vendidos por unidade
     df_marketing = df_final.groupby(['holding', 'item_vendido']).agg({
