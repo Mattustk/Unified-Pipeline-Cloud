@@ -24,6 +24,7 @@ Agora, o sistema faz tudo sozinho e em segundos.
 
 
 **Para o RH (Gestão de Pessoas)**
+
 Sem cálculos manuais: O sistema já cruza as vendas e entrega uma tabela pronta com o total vendido por cada funcionário e o valor exato da comissão de 5% que deve ser paga.
 
 Segurança: O sistema tem travas de segurança. Se uma venda entrar no sistema sem o "ID do Vendedor", ele bloqueia a operação e avisa o erro, garantindo que ninguém fique sem receber.
@@ -43,6 +44,7 @@ Entrega Automatizada (Arquivo CSV): Geração diária de um arquivo CSV de conci
 -------------------------------------------------------------------------
 
 **Para a Diretoria e Marketing**
+
 Ranking de Sucesso: Uma visão direta de quais produtos (como PCs Gamers ou Consultorias de TI) estão saindo mais, ajudando a focar os investimentos e as campanhas de marketing no que realmente dá lucro.
 
 Entrega Automatizada (Arquivo CSV): Exportação de um relatório executivo em CSV com os KPIs consolidados, pronto para alimentar os painéis de Dashboard (BI) da diretoria.
