@@ -39,8 +39,7 @@ Auditoria: O sistema barra automaticamente vendas com valores negativos ou zerad
 
 Entrega Automatizada (Arquivo CSV): Geração diária de um arquivo CSV de conciliação financeira, entregando os dados blindados e prontos para integração direta com o ERP da holding.
 
-
-
+-------------------------------------------------------------------------
 
 **Para a Diretoria e Marketing**
 Ranking de Sucesso: Uma visão direta de quais produtos (como PCs Gamers ou Consultorias de TI) estão saindo mais, ajudando a focar os investimentos e as campanhas de marketing no que realmente dá lucro.
