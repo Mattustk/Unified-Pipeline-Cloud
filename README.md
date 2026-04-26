@@ -8,56 +8,46 @@
 
 
 
-## Descrição do Projeto
-Este projeto estabelece a base da infraestrutura de dados do Guilherme Group. Trata-se de uma **pipeline de ETL (Extração, Transformação e Carga) robusta, desenvolvida para unificar fluxos de dados de diferentes verticais de negócio (atualmente Tech e Retail) em uma camada consolidada para análise estratégica.**
-A solução utiliza uma arquitetura moderna baseada em Nuvem (AWS), garantindo que os dados da holding sejam processados com integridade total, performance colunar e automação completa.
+## Sistema de Integração de Dados - Nexus Holding
 
-## Arquitetura Técnica
-O projeto foi construído utilizando as melhores práticas de Engenharia de Dados:
 
-**Cloud Storage:** AWS S3 (Raw e Processed).
 
-**Processamento:** AWS Glue (Python Shell/Pandas).
 
-**Data Handling:** awswrangler para integração nativa e pandas para manipulação.
+## Sobre o Projeto
+Esse sistema integra duas holdings (Nexus Tech e Nexus Retail) a um único ambiente na nuvem (Cloud), tornando muito mais rápido, automático e seguro captar e cruzar os dados entre as empresas.
 
-**Formato de Saída:** Apache Parquet (Otimização de custo e performance de consulta).
+Em vez de cada setor sofrer com planilhas soltas, manuais e sujeitas a erros, este projeto cria uma "fábrica de dados" que recebe as informações brutas, limpa, valida e entrega relatórios prontos e confiáveis para a tomada de decisão.
 
-**Orquestração:** AWS Glue Workflows (Triggers automatizados).
+## O Problema que Resolvemos
+Antes, para saber quanto a empresa faturou ou quanto um vendedor deveria receber de comissão, era necessário cruzar dezenas de arquivos manualmente. Isso gerava atrasos, informações duplicadas e risco de cálculos errados.
 
-## Diferenciais do Projeto
-**1. Blindagem de Dados (Data Quality)**
-O script não é apenas um transportador de dados. Ele possui uma camada de Data Validation rigorosa utilizando assertions. Se um dado crítico (CPF, Valor, IDs) vier nulo ou corrompido, a pipeline trava automaticamente, garantindo que "lixo" nunca chegue à camada final.
+Agora, o sistema faz tudo sozinho e em segundos.
 
-**2. Eficiência de Storage e Custo**
-Ao converter os arquivos originais em Parquet e utilizar a lógica de Overwrite, o sistema reduz o espaço em disco e acelera em até 10x a velocidade de leitura para ferramentas de BI, economizando custos operacionais de nuvem.
+## O Que Cada Setor Ganha Com Isso? (Entregas do Sistema)
 
-**3. Orquestração Autônoma**
-A pipeline não depende de intervenção manual. Através de triggers orquestrados, o fluxo de dados é contínuo e resiliente, tratando erros de concorrência e permissões de forma elegante.
 
-## Tecnologias Utilizadas
+**Para o RH (Gestão de Pessoas)**
+Adeus cálculos manuais: O sistema já cruza as vendas e entrega uma tabela pronta com o total vendido por cada funcionário e o valor exato da comissão de 5% que deve ser paga.
 
-**Python 3.9**
+Segurança: O sistema tem travas de segurança. Se uma venda entrar no sistema sem o "ID do Vendedor", ele bloqueia a operação e avisa o erro, garantindo que ninguém fique sem receber.
 
-**Pandas (Tratamento de dados)**
+**para o Financeiro**
+Receita Clara: Um relatório diário mostrando o Faturamento Bruto e o Custo total, unindo o que foi vendido tanto na área de Tecnologia quanto no Varejo.
 
-**AWS SDK (Boto3) (Comunicação com a nuvem)**
+Auditoria: O sistema barra automaticamente vendas com valores negativos ou zerados, garantindo que o balanço financeiro seja 100% real.
 
-**AWS Data Wrangler (ETL de alta performance)**
+**Para a Diretoria e Marketing**
+Ranking de Sucesso: Uma visão direta de quais produtos (como PCs Gamers ou Consultorias de TI) estão saindo mais, ajudando a focar os investimentos e as campanhas de marketing no que realmente dá lucro.
 
-**AWS Glue (Serverless Spark/Python environment)**
+ 
+## Como Funciona o sistema? 
 
-## Roadmap & Futuro (Expansion Plan)
+O processo funciona como uma esteira de produção automatizada dividida em 3 fases:
 
-O Guilherme Group foi desenhado para ser escalável. Os próximos passos já mapeados para o projeto são:
+Recepção (Raw): Recebemos os arquivos brutos das vendas de cada empresa na nossa nuvem.
 
-**Novas Holdings:** Integração modular de novas empresas do grupo apenas adicionando novos caminhos de entrada.
+Tratamento (Processamento): Um robô lê linha por linha. Ele limpa CPFs digitados errados, corrige formatos de data e aplica testes rigorosos de qualidade (ex: o valor unitário multiplicado pela quantidade tem que bater exatamente com o valor total).
 
-**Real-Time Data:** Processamento de vendas em tempo real (Streaming).
-
-**Data Lakehouse:** Implementação de tabelas AWS Glue Catalog para consultas via Amazon Athena.
-
-Dashboards de Alta Gestão: Integração direta da camada final com Amazon QuickSight ou PowerBI.
-
+Vitrine (Gold Zone): Os dados aprovados são empacotados em um formato super leve e rápido, sendo separados em pastas específicas. O RH só tem acesso aos dados de RH, e o Financeiro só aos dados do Financeiro.
 ## Autor
 Guilherme - Lead Data Engineer no Guilherme Group
