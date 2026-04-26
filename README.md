@@ -33,6 +33,7 @@ Entrega Automatizada (Arquivo CSV): O setor recebe automaticamente um arquivo CS
 -------------------------------------------------------------------------
 
 **Para o Financeiro**
+
 Receita Clara: Um relatório diário mostrando o Faturamento Bruto e o Custo total, unindo o que foi vendido tanto na área de Tecnologia quanto no Varejo.
 
 Auditoria: O sistema barra automaticamente vendas com valores negativos ou zerados, garantindo que o balanço financeiro seja 100% real.
