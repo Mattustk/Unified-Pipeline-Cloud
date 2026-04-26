@@ -8,7 +8,7 @@
 
 
 
-##Sobre o Projeto:
+## Sobre o Projeto:
 
 Esse sistema integra duas holdings (Nexus Tech e Nexus Retail) a um único ambiente na nuvem (Cloud), tornando muito mais rápido, automático e seguro captar e cruzar os dados entre as empresas.
 
