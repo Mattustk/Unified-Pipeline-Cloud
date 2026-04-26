@@ -1,0 +1,7 @@
+| id_vendedor   | holding      |   valor_acumulado |   total_vendas |   comissao_a_pagar |
+|:--------------|:-------------|------------------:|---------------:|-------------------:|
+| VEND-RETL-01  | NEXUS RETAIL |            392720 |             47 |            3927.2  |
+| VEND-RETL-02  | NEXUS RETAIL |            356850 |             43 |            3568.5  |
+| VEND-RETL-03  | NEXUS RETAIL |            369460 |             53 |            3694.6  |
+| VEND-TECH-01  | NEXUS TECH   |          803550.0 |             49 |            8035.5  |
+| VEND-TECH-02  | NEXUS TECH   |          683550.0 |             45 |            6835.5  |
