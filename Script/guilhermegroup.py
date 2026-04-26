@@ -113,7 +113,7 @@ try:
     }).sort_values(by='quantidade', ascending=False).reset_index()
 
     # ---------------------------------------------------------
-    # 6. SALVAMENTO FINAL NO S3 (FORMATO PARQUET)
+    # 6. SALVAMENTO  NO S3 (FORMATO PARQUET)
     # ---------------------------------------------------------
     wr.s3.to_parquet(df=df_tech, path=BUCKET_OUT_TECH, dataset=True, mode="overwrite")
     wr.s3.to_parquet(df=df_retail, path=BUCKET_OUT_RETAIL, dataset=True, mode="overwrite")
@@ -121,6 +121,28 @@ try:
     wr.s3.to_parquet(df=df_marketing, path=BUCKET_GOLD_DIRETORIA, dataset=True, mode="overwrite")
     wr.s3.to_parquet(df=df_rh, path=BUCKET_GOLD_RH, dataset=True, mode="overwrite")
     wr.s3.to_parquet(df=df_financeiro, path=BUCKET_GOLD_FINANCEIRO, dataset=True, mode="overwrite")
+
+    # ---------------------------------------------------------
+    # 7. SALVAMENTO FINAL NO S3 (FORMATO CSV para Excel ou Google Sheets)
+    # ---------------------------------------------------------
+    wr.s3.to_csv(df=df_rh, 
+                 path="s3://guilherme-holding/rh/export_excel/", 
+                 index=False, 
+                 dataset=True, # <
+                 mode="overwrite")
+    
+    wr.s3.to_csv(df=df_marketing, 
+                 path="s3://guilherme-holding/Diretoria/export_excel/", 
+                 index=False, 
+                 dataset=True, 
+                 mode="overwrite")
+    
+    wr.s3.to_csv(df=df_financeiro, 
+                 path="s3://guilherme-holding/financeiro/export_excel/", 
+                 index=False, 
+                 dataset=True, 
+                 mode="overwrite")
+
 
 except Exception as e:
     # Captura qualquer erro no processo e exibe no log
