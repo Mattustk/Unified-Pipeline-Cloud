@@ -14,16 +14,16 @@ import boto3
 # ==========================================
 # CONFIGURAÇÃO DOS CAMINHOS DE ORIGEM E DESTINO (S3)
 # ==========================================
-BUCKET_RAW_TECH = "s3://guilherme-holding/nexus-tech/raw/tech_nexus.csv"
-BUCKET_RAW_RETAIL = "s3://guilherme-holding/nexus-retail/raw/retail_nexus.csv"
+BUCKET_RAW_TECH = "______________________________________"
+BUCKET_RAW_RETAIL = ______________________________________"
 
-BUCKET_OUT_TECH = "s3://guilherme-holding/nexus-tech/processed/"
-BUCKET_OUT_RETAIL = "s3://guilherme-holding/nexus-retail/processed/"
-BUCKET_OUT_FINAL = "s3://guilherme-holding/guilherme_consolidado/gold_zone/"
+BUCKET_OUT_TECH = "______________________________________/"
+BUCKET_OUT_RETAIL = "______________________________________"
+BUCKET_OUT_FINAL = "______________________________________"
 
-BUCKET_GOLD_DIRETORIA = "s3://guilherme-holding/Diretoria/gold/"
-BUCKET_GOLD_RH = "s3://guilherme-holding/rh/gold/"
-BUCKET_GOLD_FINANCEIRO = "s3://guilherme-holding/financeiro/gold/"
+BUCKET_GOLD_DIRETORIA = "______________________________________"
+BUCKET_GOLD_RH = "______________________________________"
+BUCKET_GOLD_FINANCEIRO = "______________________________________"
 
 try:
     # ---------------------------------------------------------
@@ -115,30 +115,30 @@ try:
     # ---------------------------------------------------------
     # 6. SALVAMENTO  NO S3 (FORMATO PARQUET)
     # ---------------------------------------------------------
-    wr.s3.to_parquet(df=df_tech, path=BUCKET_OUT_TECH, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_retail, path=BUCKET_OUT_RETAIL, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_final, path=BUCKET_OUT_FINAL, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_marketing, path=BUCKET_GOLD_DIRETORIA, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_rh, path=BUCKET_GOLD_RH, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_financeiro, path=BUCKET_GOLD_FINANCEIRO, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_tech, path=__________, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_retail, path=__________, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_final, path=__________, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_marketing, path=__________, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_rh, path=__________, dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df=df_financeiro, path=__________, dataset=True, mode="overwrite")
 
     # ---------------------------------------------------------
     # 7. SALVAMENTO FINAL NO S3 (FORMATO CSV para Excel ou Google Sheets)
     # ---------------------------------------------------------
     wr.s3.to_csv(df=df_rh, 
-                 path="s3://guilherme-holding/rh/export_excel/", 
+                 path="______________________________________", 
                  index=False, 
                  dataset=True, # <
                  mode="overwrite")
     
     wr.s3.to_csv(df=df_marketing, 
-                 path="s3://guilherme-holding/Diretoria/export_excel/", 
+                 path="______________________________________", 
                  index=False, 
                  dataset=True, 
                  mode="overwrite")
     
     wr.s3.to_csv(df=df_financeiro, 
-                 path="s3://guilherme-holding/financeiro/export_excel/", 
+                 path="______________________________________", 
                  index=False, 
                  dataset=True, 
                  mode="overwrite")
