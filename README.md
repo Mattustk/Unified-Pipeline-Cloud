@@ -16,7 +16,7 @@ Autor: Guilherme Coradini
 
 LinkedIn: https://www.linkedin.com/in/guilherme-coradini-7607883ab/
 
-Status do Projeto: v2.0
+Status do Projeto: v2.1
 
 ## Por que este projeto? 
 Este pipeline foi desenvolvido para resolver o desafio de consolidar dados transacionais de múltiplas holdings (Nexus Tech e Nexus Retail). O objetivo é garantir que dados brutos e heterogêneos sejam transformados em informações financeiras confiáveis, utilizando uma arquitetura escalável na nuvem (AWS) e aplicando rigorosos Quality Gates para evitar que erros de processamento cheguem à camada de decisão.
@@ -46,9 +46,11 @@ graph LR
 ## Tecnologias Utilizadas
 **Python 3.10+ (Pandas, Numpy)**
 
+**Python 3.10+ (Pandas, Numpy)**
+
 **Parquet (Armazenamento colunar eficiente)**
 
-**Faker (Geração de dados sintéticos reprodutíveis)**
+**Faker (Geração de dados sintéticos reprodutíveis com semente fixa)**
 
 ## Como Executar (Reprodutibilidade)
 
@@ -66,7 +68,7 @@ Para garantir a reprodutibilidade, utilize o script de semente fixa:
 ```bash
 python src/generate_data.py
 ```
-Isso criará os arquivos tech_nexus.csv e retail_nexus.csv na pasta data/raw/ com dados consistentes.
+O script de geração utiliza random.seed(42) e uma data de corte fixa (2025-12-31) para garantir que os testes sejam determinísticos e idênticos em qualquer ambiente.
 
 3. Rodar o Pipeline
 
