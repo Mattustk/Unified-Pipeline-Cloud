@@ -4,8 +4,6 @@ Unified Data Pipeline (AWS Edition)
 **Nota Importante: Todos os dados utilizados neste projeto (nomes, CPFs, e-mails e transações) foram gerados de forma artificial utilizando a biblioteca Faker do python. Qualquer semelhança com nomes, pessoas ou dados da vida real é mera coincidência. Este ambiente foi construído estritamente para fins de demonstração técnica e estudo de engenharia de dados.**
 
 
-![Status do Workflow](Screenshots/Workflow.png)
-
 
 
 ## Sobre o Projeto:
@@ -24,20 +22,22 @@ Modularização: Código estruturado em funções reutilizáveis, reduzindo a re
 
 Schema Enforcement: Proteção contra quebra de tipos na ingestão Bronze, tratando dados brutos como strings antes da tipagem rigorosa na Silver.
 
-## Fluxo de Dados (Arquitetura)
+
+
+
+##  Fluxo de Dados (Arquitetura)
 
 ```mermaid
-    classDef bronze fill:#cd7f32,stroke:#333,stroke-width:2px;
-    classDef silver fill:#c0c0c0,stroke:#333,stroke-width:2px;
-    classDef gold fill:#ffd700,stroke:#333,stroke-width:2px;
-    classDef quarantine fill:#ff4c4c,stroke:#333,stroke-width:2px;
-
-    class A bronze;
-    class D quarantine;
-    class E silver;
-    class G,H,I gold;
+graph LR
+    A[S3 Bronze: Raw CSVs] --> B(Script Python: Ingestão)
+    B --> C{Quality Gate}
+    C -->|Falha| D[S3 Quarentena: Erros CSV]
+    C -->|Sucesso| E(S3 Silver: Limpeza Parquet)
+    E --> F(S3 Gold: Business Logic)
+    F --> G[Gold RH: Comissões]
+    F --> H[Gold Financeiro: DRE]
+    F --> I[Gold Master: Consolidado]
 ```
-
 
 ecnologias Utilizadas
 Python 3.11
