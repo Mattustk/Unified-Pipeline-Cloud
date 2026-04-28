@@ -24,6 +24,9 @@ Modularização: Código estruturado em funções reutilizáveis, reduzindo a re
 
 Schema Enforcement: Proteção contra quebra de tipos na ingestão Bronze, tratando dados brutos como strings antes da tipagem rigorosa na Silver.
 
+## Fluxo de Dados (Arquitetura)
+
+```mermaid
 graph LR
     A[S3 Bronze: Raw CSVs] --> B(Script Python: Ingestão)
     B --> C{Quality Gate}
