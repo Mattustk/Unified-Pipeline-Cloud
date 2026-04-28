@@ -74,10 +74,19 @@ Isso criará os arquivos tech_nexus.csv e retail_nexus.csv na pasta data/raw/ co
 python src/pythonmain.py
 ```
 
-Quality Gates & Governança
-Bronze Lock: Todos os campos lidos como string para evitar perdas.
+##  Evidências de Execução (AWS Cloud)
 
-Financial Gate: Validação de valor_total == (quantidade * valor_unitario) com tolerância de precisão via np.isclose.
+Para validar a robustez e a escalabilidade do pipeline, o projeto foi implantado e executado com sucesso no ambiente AWS utilizando Glue Jobs e Workflows.
 
-Quarentena: Registros que falham nos testes de qualidade são desviados para uma camada de auditoria sem interromper o pipeline.
+### 1. Monitoramento de Jobs (Success Rate)
+![Histórico de execuções com sucesso no AWS Glue Monitoring](Screenshots/Job-UDP.png)
+*Figura 1: Tabela de monitoramento comprovando 4 execuções consecutivas com sucesso (Sucedido).*
+
+### 2. Orquestração via Workflow
+![Workflow da AWS finalizado com sucesso](Screenshots/Worflow-UDP.png)
+*Figura 2: Fluxo de trabalho (Workflow) orquestrado e finalizado sem erros.*
+
+### 3. Persistência na Camada Gold (Parquet)
+![Arquivo Parquet gerado no bucket S3 na pasta gold](Screenshots/S3.png)
+*Figura 3: Camada Gold consolidada no Amazon S3, armazenada em formato Parquet para alta performance analítica.*
 
