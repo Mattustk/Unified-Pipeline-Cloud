@@ -7,7 +7,7 @@
 ![Status](https://img.shields.io/badge/Pipeline-Validated-success?style=for-the-badge)
 
 ## Aviso de Privacidade e Origem dos Dados
-**Nota Importante: Todos os dados utilizados neste projeto (nomes, CPFs, e-mails e transações) foram gerados de forma artificial utilizando a biblioteca Faker do python. Qualquer semelhança com nomes, pessoas ou dados da vida real é mera coincidência. Este ambiente foi construído estritamente para fins de demonstração técnica e estudo de engenharia de dados.**
+ Nota Importante: Todos os dados utilizados neste projeto (nomes, CPFs, e-mails e transações) foram gerados de forma artificial utilizando a biblioteca Faker do python. Qualquer semelhança com nomes, pessoas ou dados da vida real é mera coincidência. Este ambiente foi construído estritamente para fins de demonstração técnica e estudo de engenharia de dados.
 
 
 
@@ -63,6 +63,23 @@ Execute o Pipeline:
 ```bash
 python main.py
 ```
+
+Configure suas credenciais AWS:
+Certifique-se de que seu ambiente está autenticado via AWS CLI (aws configure).
+
+Estrutura do S3:
+O script espera um bucket chamado guilherme-holding com as pastas:
+
+nexus-tech/raw/ (Contendo o tech_nexus.csv)
+
+nexus-retail/raw/ (Contendo o retail_nexus.csv)
+
+Execute o Pipeline:
+
+```Bash
+python main.py
+```
+
 
 ## Autor
 Guilherme
