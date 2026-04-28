@@ -125,6 +125,9 @@ try:
 
     # 6. CAMADA GOLD: Consolidação de Holdings e Agregações de Negócio
     df_gold = pd.concat([df_tech_silver, df_retail_silver], ignore_index=True)
+    
+    df_gold['custo_unitario'] = df_gold['custo_unitario'].fillna(0) # Evita que vendas fiquem sem custo na análise
+
 
     # Cálculo do custo total (Business Logic: Custo Unitário * Quantidade)
     df_gold['custo_total'] = df_gold['custo_unitario'] * df_gold['quantidade']
