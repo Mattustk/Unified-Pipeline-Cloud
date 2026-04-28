@@ -10,58 +10,58 @@ Unified Data Pipeline (AWS Edition)
 
 ## Sobre o Projeto:
 
-Esse sistema integra duas holdings (Nexus Tech e Nexus Retail) a um único ambiente na nuvem (Cloud), tornando muito mais rápido, automático e seguro captar e cruzar os dados entre as empresas.
+Unified Pipeline Cloud v2.0 — Medallion Architecture
+Este projeto implementa um pipeline de dados unificado na AWS para processamento de múltiplas holdings (Nexus Tech e Nexus Retail), seguindo rigorosamente a Arquitetura Medalhão (Bronze, Silver e Gold) e os princípios de Data Lakehouse da Databricks.
 
-Em vez de cada setor sofrer com planilhas soltas, manuais e sujeitas a erros, este projeto cria uma "fábrica de dados" que recebe as informações brutas, limpa, valida e entrega relatórios prontos e confiáveis para a tomada de decisão.
+Evolução v2.0 (The "Audit" Update)
+Após feedback técnico, o projeto foi refatorado para transcender o ETL básico, focando em Governança e Resiliência:
 
-## O Problema que Resolvemos
-Antes, para saber quanto a empresa faturou ou quanto um vendedor deveria receber de comissão, era necessário cruzar dezenas de arquivos manualmente. Isso gerava atrasos, informações duplicadas e risco de cálculos errados.
+Qualidade de Dados (Quality Gates): Implementação de validação cruzada (Preço * Qtd == Total). Registros inconsistentes são desviados para uma Quarentena, garantindo que a camada Gold seja 100% íntegra.
 
-Agora, o sistema faz tudo sozinho e em segundos.
+Observabilidade: Substituição de prints por Logging Estruturado. Todo o fluxo é rastreável, facilitando o debug em produção.
 
-## O Que Cada Setor Ganha Com Isso? (Entregas do Sistema)
+Modularização: Código estruturado em funções reutilizáveis, reduzindo a repetição e facilitando a manutenção (Padrão Don't Repeat Yourself - DRY).
+
+Schema Enforcement: Proteção contra quebra de tipos na ingestão Bronze, tratando dados brutos como strings antes da tipagem rigorosa na Silver.
+
+graph LR
+    A[S3 Bronze: Raw CSVs] --> B(Script Python: Ingestão)
+    B --> C{Quality Gate}
+    C -->|Falha| D[S3 Quarentena: Erros CSV]
+    C -->|Sucesso| E(S3 Silver: Limpeza Parquet)
+    E --> F(S3 Gold: Business Logic)
+    F --> G[Gold RH: Comissões]
+    F --> H[Gold Financeiro: DRE]
+    F --> I[Gold Master: Consolidado]
 
 
 
-**Para o RH (Gestão de Pessoas)**
+ecnologias Utilizadas
+Python 3.11
 
-Sem cálculos manuais: O sistema já cruza as vendas e entrega uma tabela pronta com o total vendido por cada funcionário e o valor exato da comissão de 1% que deve ser paga.
+AWS S3 (Armazenamento Distribuído)
 
-Segurança: O sistema tem travas de segurança. Se uma venda entrar no sistema sem o "ID do Vendedor", ele bloqueia a operação e avisa o erro, garantindo que ninguém fique sem receber.
+AWS DataWrangler (Integração otimizada com S3)
 
-Entrega Automatizada (Arquivo CSV): O setor recebe automaticamente um arquivo CSV isolado e validado, contendo apenas a folha de comissões pronta para ser processada, sem necessidade de intervenção humana.
+Pandas (Motor de transformação)
 
--------------------------------------------------------------------------
+Logging (Monitoramento de pipeline)
 
-**Para o Financeiro**
+omo Executar (Quick Start)
+Instale as dependências:
 
-Receita Clara: Um relatório diário mostrando o Faturamento Bruto e o Custo total, unindo o que foi vendido tanto na área de Tecnologia quanto no Varejo.
+pip install pandas awswrangler boto3
 
-Auditoria: O sistema barra automaticamente vendas com valores negativos ou zerados, garantindo que o balanço financeiro seja 100% real.
+Configure suas credenciais AWS:
 
-Entrega Automatizada (Arquivo CSV): Geração diária de um arquivo CSV de conciliação financeira, entregando os dados blindados e prontos para integração direta com o ERP da holding.
+Certifique-se de que seu ambiente está autenticado via AWS CLI (aws configure).
 
--------------------------------------------------------------------------
+Estrutura do S3:
+O script espera um bucket chamado guilherme-holding com as pastas nexus-tech/raw/ e nexus-retail/raw/.
 
-**Para a Diretoria e Marketing**
+Execute o Pipeline:
 
-Ranking de Sucesso: Uma visão direta de quais produtos (como PCs Gamers ou Consultorias de TI) estão saindo mais, ajudando a focar os investimentos e as campanhas de marketing no que realmente dá lucro.
-
-Entrega Automatizada (Arquivo CSV): Exportação de um relatório executivo em CSV com os KPIs consolidados, pronto para alimentar os painéis de Dashboard (BI) da diretoria.
-
-## Como Funciona o sistema?
-O processo funciona como uma esteira de produção automatizada dividida em **4 fases:**
-
-**Recepção (Raw):** Recebemos os arquivos brutos das vendas de cada empresa na nossa nuvem.
-
-**Tratamento (Processamento):** Um robô lê linha por linha. Ele limpa CPFs digitados errados, corrige formatos de data e aplica testes rigorosos de qualidade (ex: o valor unitário multiplicado pela quantidade tem que bater exatamente com o valor total).
-
-**Vitrine (Gold Zone):** Os dados aprovados são empacotados em um formato super leve e rápido, sendo separados em pastas específicas com governança de dados. O RH só tem acesso aos dados de RH, e o Financeiro só aos dados do Financeiro.
-
-**Distribuição (Exportação CSV):** Na ponta final da esteira, o sistema converte os dados aprovados da Vitrine em relatórios .csv segmentados e os disponibiliza automaticamente para download de cada departamento
-
-**Vitrine (Gold Zone):** Os dados aprovados são empacotados em um formato super leve e rápido, sendo separados em pastas específicas. O RH só tem acesso aos dados de RH, e o Financeiro só aos dados do Financeiro.
-
+python main.py
 
 ## Autor
 Guilherme
