@@ -50,7 +50,7 @@ catalogo = {
 
 def gerar_dados(nome_holding, num_registros, vendedores, arquivo_nome):
     data_list = []
-    # --- ITEM 1: DATA FIXA (Fim de 2025) ---
+    # --- ITEM 1: DATA FIXA ---
     FIXED_END_DATE = '2025-12-31'
 
     for i in range(num_registros):
@@ -62,17 +62,25 @@ def gerar_dados(nome_holding, num_registros, vendedores, arquivo_nome):
         valor_unitario = info_prod['valor']
         custo_unitario = info_prod['custo']
         
+        # Variável para controlar a lógica de erro
+        prob = random.random()
+
         # --- ITEM 5: INJEÇÃO DE RUÍDO CONTROLADO ---
-        # 1. Injetar Nulos no Custo (0.5% de chance) - Para testar seu filtro de Margem Bruta
-        if random.random() < 0.005:
+        
+        # A. Erro de Cálculo (2% de chance) - Valor total não bate com Unitario * Qtd
+        if prob < 0.02:
+            valor_total_transacao = round((valor_unitario * qtd) * 1.5, 2)
+        else:
+            valor_total_transacao = round(valor_unitario * qtd, 2)
+
+        # B. Nulos (1% de chance) - Custo unitário vira None
+        if 0.02 <= prob < 0.03:
             custo_unitario = None
         
-        # 2. Injetar Valores Negativos (0.5% de chance) - Para testar o Quality Gate
-        if random.random() < 0.005:
+        # C. Negativos (0,5% de chance) - Valor unitário fica negativo
+        if 0.03 <= prob < 0.035:
             valor_unitario = valor_unitario * -1
-
-        valor_total = round(valor_unitario * qtd, 2) if valor_unitario is not None else 0
-        custo_total = round(custo_unitario * qtd, 2) if custo_unitario is not None else None
+            valor_total_transacao = valor_total_transacao * -1
 
         data_list.append({
             'holding': nome_holding,
@@ -88,14 +96,13 @@ def gerar_dados(nome_holding, num_registros, vendedores, arquivo_nome):
             'quantidade': qtd,
             'valor_unitario': valor_unitario,
             'custo_unitario': custo_unitario,
-            'valor_total_transacao': valor_total,
-            'metodo_pagamento': random.choice(metodos_pagamento)
+            'valor_total_transacao': valor_total_transacao,
+            'metodo_pagamento': random.choice(metodos_pagamento),
+            'data': fake.date_between(start_date='-1y', end_date=FIXED_END_DATE)
         })
 
     df = pd.DataFrame(data_list)
     df.to_csv(arquivo_nome, index=False)
-    print(f"✅ {nome_holding} gerado com {num_registros} linhas (Seeds fixas e Ruído injetado).")
-
-# Execução usando os nomes das variáveis de ambiente
-gerar_dados('NEXUS TECH', 500, vendedores_tech, FILE_TECH)
-gerar_dados('NEXUS RETAIL', 1000, vendedores_retail, FILE_RETAIL)
+    # Cálculo para o print bater com a realidade
+    print(f"✅ {nome_holding}: {num_registros} linhas geradas.")
+    print(f"   -> Ruído injetado: ~3.5% de registros inconsistentes para teste de robustez.")
