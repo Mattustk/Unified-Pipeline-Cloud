@@ -13,7 +13,7 @@ from datetime import datetime
 
 # CONFIGURAÇÃO DE LOGGING: Monitoramento estruturado para auditoria
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("MirantePipeline")
+logger = logging.getLogger("Unified-Pipeline-Cloud")
 
 # CONTROLE DE EXECUÇÃO: Data de processamento para rastreabilidade (Run ID)
 execution_date = datetime.now().strftime("%Y-%m-%d")
