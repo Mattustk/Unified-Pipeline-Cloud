@@ -22,9 +22,12 @@ jobs:
       - name: Instalar Dependências
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Garante que as dependências (incluindo pytest) sejam instaladas
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Caso não esteja no requirements, instalamos aqui por segurança
+          pip install pytest pandas faker awswrangler 
 
       - name: Rodar Testes Unitários (Pytest)
-        # O GitHub vai rodar a função real que refatoramos!
         run: |
-          pytest tests/test_pipeline.py
+          # O segredo: 'python -m' adiciona automaticamente o diretório atual ao sys.path
+          python -m pytest tests/test_pipeline.py
