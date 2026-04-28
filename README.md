@@ -71,7 +71,7 @@ Isso criará os arquivos tech_nexus.csv e retail_nexus.csv na pasta data/raw/ co
 3. Rodar o Pipeline
 
 ```bash
-python main.py
+python src/pythonmain.py
 ```
 
 Quality Gates & Governança
