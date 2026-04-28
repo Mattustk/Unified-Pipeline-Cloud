@@ -36,7 +36,7 @@ graph LR
     F --> G[Gold RH: Comissões]
     F --> H[Gold Financeiro: DRE]
     F --> I[Gold Master: Consolidado]
-
+```
 
 
 ecnologias Utilizadas
