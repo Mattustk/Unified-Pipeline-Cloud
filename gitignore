@@ -1,0 +1,16 @@
+# Python - Arquivos temporários e compilação
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# AWS - Credenciais e configurações locais (SEGURANÇA!)
+.aws/
+credentials
+.env
+
+# Sistema Operacional - Lixo visual
+.DS_Store
+Thumbs.db
