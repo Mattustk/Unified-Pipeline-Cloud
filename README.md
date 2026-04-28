@@ -81,8 +81,3 @@ Financial Gate: Validação de valor_total == (quantidade * valor_unitario) com 
 
 Quarentena: Registros que falham nos testes de qualidade são desviados para uma camada de auditoria sem interromper o pipeline.
 
-
-
-
-## Autor
-Guilherme
