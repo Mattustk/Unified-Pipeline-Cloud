@@ -76,6 +76,16 @@ O script de geração utiliza random.seed(42) e uma data de corte fixa (2025-12-
 python src/pythonmain.py
 ```
 
+## Teste de Robustez (Chaos Engineering)
+
+O pipeline foi testado contra ruído sintético controlado para garantir que a Camada Gold permaneça íntegra:
+
+| Falha Injetada | Taxa | Objetivo do Teste |
+| :--- | :--- | :--- |
+| **Erro de Cálculo** | 2.0% | Validar integridade matemática Unitário x Qtd. |
+| **Custo Nulo** | 1.0% | Garantir que a Margem Bruta não seja inflada. |
+| **Valores Negativos** | 0.5% | Barrar transações financeiramente impossíveis. |
+
 ##  Evidências de Execução (AWS Cloud)
 
 Para validar a robustez e a escalabilidade do pipeline, o projeto foi implantado e executado com sucesso no ambiente AWS utilizando Glue Jobs e Workflows.
