@@ -80,6 +80,8 @@ Execute o Pipeline:
 python main.py
 ```
 
+Suite de testes unitários validada com 100% de aproveitamento
+
 
 ## Autor
 Guilherme
