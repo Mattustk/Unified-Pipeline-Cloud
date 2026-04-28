@@ -1,4 +1,4 @@
-#  Unified Data Pipeline (AWS Edition)
+#  Unified Data Pipeline
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
@@ -10,11 +10,8 @@
  Nota Importante: Todos os dados utilizados neste projeto (nomes, CPFs, e-mails e transações) foram gerados de forma artificial utilizando a biblioteca Faker do python. Qualquer semelhança com nomes, pessoas ou dados da vida real é mera coincidência. Este ambiente foi construído estritamente para fins de demonstração técnica e estudo de engenharia de dados.
 
 
-
-
 ## Sobre o Projeto:
 
-Unified Pipeline Cloud - Medallion Architecture
 Autor: Guilherme Coradini
 
 LinkedIn: https://www.linkedin.com/in/guilherme-coradini-7607883ab/
@@ -32,16 +29,6 @@ Bronze (Raw): Ingestão de dados String-Only para garantir que nenhuma informaç
 Silver (Processed): Limpeza, tipagem correta, tratamento de nulos e aplicação de filtros de qualidade.
 
 Gold (Analytics): Agregação financeira (DRE simplificada) pronta para consumo em dashboards.
-
-Tecnologias Utilizadas
-Python 3.10+ (Pandas, Numpy)
-
-AWS Wrangler & Boto3 (Integração S3/Glue)
-
-Parquet (Armazenamento colunar eficiente)
-
-Faker (Geração de dados sintéticos reprodutíveis)
-
 
 
 ```mermaid
@@ -95,11 +82,6 @@ Financial Gate: Validação de valor_total == (quantidade * valor_unitario) com 
 Quarentena: Registros que falham nos testes de qualidade são desviados para uma camada de auditoria sem interromper o pipeline.
 
 
-
-
-```Bash
-python main.py
-```
 
 
 ## Autor
