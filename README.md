@@ -27,15 +27,15 @@ Schema Enforcement: Proteção contra quebra de tipos na ingestão Bronze, trata
 ## Fluxo de Dados (Arquitetura)
 
 ```mermaid
-graph LR
-    A[S3 Bronze: Raw CSVs] --> B(Script Python: Ingestão)
-    B --> C{Quality Gate}
-    C -->|Falha| D[S3 Quarentena: Erros CSV]
-    C -->|Sucesso| E(S3 Silver: Limpeza Parquet)
-    E --> F(S3 Gold: Business Logic)
-    F --> G[Gold RH: Comissões]
-    F --> H[Gold Financeiro: DRE]
-    F --> I[Gold Master: Consolidado]
+    classDef bronze fill:#cd7f32,stroke:#333,stroke-width:2px;
+    classDef silver fill:#c0c0c0,stroke:#333,stroke-width:2px;
+    classDef gold fill:#ffd700,stroke:#333,stroke-width:2px;
+    classDef quarantine fill:#ff4c4c,stroke:#333,stroke-width:2px;
+
+    class A bronze;
+    class D quarantine;
+    class E silver;
+    class G,H,I gold;
 ```
 
 
