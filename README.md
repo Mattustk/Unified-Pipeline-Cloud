@@ -14,24 +14,35 @@
 
 ## Sobre o Projeto:
 
-Unified Pipeline Cloud v2.0 — Medallion Architecture
-Este projeto implementa um pipeline de dados unificado na AWS para processamento de múltiplas holdings (Nexus Tech e Nexus Retail), seguindo rigorosamente a Arquitetura Medalhão (Bronze, Silver e Gold) e os princípios de Data Lakehouse da Databricks.
+Unified Pipeline Cloud - Medallion Architecture
+Autor: Guilherme Coradini
 
-Evolução v2.0 (The "Audit" Update)
-Após feedback técnico, o projeto foi refatorado para transcender o ETL básico, focando em Governança e Resiliência:
+LinkedIn: https://www.linkedin.com/in/guilherme-coradini-7607883ab/
 
-Qualidade de Dados (Quality Gates): Implementação de validação cruzada (Preço * Qtd == Total). Registros inconsistentes são desviados para uma Quarentena, garantindo que a camada Gold seja 100% íntegra.
+Status do Projeto: v2.0
 
-Observabilidade: Substituição de prints por Logging Estruturado. Todo o fluxo é rastreável, facilitando o debug em produção.
+## Por que este projeto? 
+Este pipeline foi desenvolvido para resolver o desafio de consolidar dados transacionais de múltiplas holdings (Nexus Tech e Nexus Retail). O objetivo é garantir que dados brutos e heterogêneos sejam transformados em informações financeiras confiáveis, utilizando uma arquitetura escalável na nuvem (AWS) e aplicando rigorosos Quality Gates para evitar que erros de processamento cheguem à camada de decisão.
 
-Modularização: Código estruturado em funções reutilizáveis, reduzindo a repetição e facilitando a manutenção (Padrão Don't Repeat Yourself - DRY).
+## Arquitetura e Fluxo de Dados
+O projeto segue a Medallion Architecture, garantindo a linhagem e a qualidade dos dados em cada etapa:
 
-Schema Enforcement: Proteção contra quebra de tipos na ingestão Bronze, tratando dados brutos como strings antes da tipagem rigorosa na Silver.
+Bronze (Raw): Ingestão de dados String-Only para garantir que nenhuma informação seja perdida por tipagem incorreta.
+
+Silver (Processed): Limpeza, tipagem correta, tratamento de nulos e aplicação de filtros de qualidade.
+
+Gold (Analytics): Agregação financeira (DRE simplificada) pronta para consumo em dashboards.
+
+Tecnologias Utilizadas
+Python 3.10+ (Pandas, Numpy)
+
+AWS Wrangler & Boto3 (Integração S3/Glue)
+
+Parquet (Armazenamento colunar eficiente)
+
+Faker (Geração de dados sintéticos reprodutíveis)
 
 
-
-
-##  Fluxo de Dados (Arquitetura)
 
 ```mermaid
 graph LR
@@ -45,36 +56,46 @@ graph LR
     F --> I[Gold Master: Consolidado]
 ```
 
-##  Tecnologias Utilizadas
+## Tecnologias Utilizadas
+**Python 3.10+ (Pandas, Numpy)**
 
-* **Python 3.11**
-* **AWS S3** (Armazenamento Distribuído)
-* **AWS DataWrangler** (Integração otimizada com S3)
-* **Pandas** (Motor de transformação)
-* **Logging** (Monitoramento de pipeline)
+**Parquet (Armazenamento colunar eficiente)**
 
-##  Como Executar (Quick Start)
+**Faker (Geração de dados sintéticos reprodutíveis)**
 
-1. **Instale as dependências:**
+## Como Executar (Reprodutibilidade)
+
+1. Clonar e Configurar
+
 ```bash
-pip install pandas awswrangler boto3
+git clone https://github.com/Mattustk/Unified-Pipeline-Cloud.git
+cd Unified-Pipeline-Cloud
+pip install -r requirements.txt
 ```
-Execute o Pipeline:
+
+2. Gerar Dados de Teste
+Para garantir a reprodutibilidade, utilize o script de semente fixa:
+
+```bash
+python src/generate_data.py
+```
+Isso criará os arquivos tech_nexus.csv e retail_nexus.csv na pasta data/raw/ com dados consistentes.
+
+3. Rodar o Pipeline
+
 ```bash
 python main.py
 ```
 
-Configure suas credenciais AWS:
-Certifique-se de que seu ambiente está autenticado via AWS CLI (aws configure).
+Quality Gates & Governança
+Bronze Lock: Todos os campos lidos como string para evitar perdas.
 
-Estrutura do S3:
-O script espera um bucket chamado guilherme-holding com as pastas:
+Financial Gate: Validação de valor_total == (quantidade * valor_unitario) com tolerância de precisão via np.isclose.
 
-nexus-tech/raw/ (Contendo o tech_nexus.csv)
+Quarentena: Registros que falham nos testes de qualidade são desviados para uma camada de auditoria sem interromper o pipeline.
 
-nexus-retail/raw/ (Contendo o retail_nexus.csv)
 
-Execute o Pipeline:
+
 
 ```Bash
 python main.py
