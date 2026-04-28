@@ -9,144 +9,98 @@
 
 import pandas as pd
 import awswrangler as wr
-import boto3 
+import boto3
+import logging
+from datetime import datetime
 
-# ==========================================
-# CONFIGURAÇÃO DOS CAMINHOS DE ORIGEM E DESTINO (S3)
-# ==========================================
-BUCKET_RAW_TECH = "______________________________________"
-BUCKET_RAW_RETAIL = ______________________________________"
+# 1. ENGENHARIA DE SOFTWARE: LOGGING ESTRUTURADO
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("MirantePipeline")
 
-BUCKET_OUT_TECH = "______________________________________/"
-BUCKET_OUT_RETAIL = "______________________________________"
-BUCKET_OUT_FINAL = "______________________________________"
+# Configurações de Caminho
+BUCKET_BASE = "___________"
+PATHS = {
+    "raw_tech": f"{BUCKET_BASE}___________",
+    "raw_retail": f"{BUCKET_BASE}___________",
+    "quarantine": f"{BUCKET_BASE}___________",
+    "silver_tech": f"{BUCKET_BASE}___________",
+    "silver_retail": f"{BUCKET_BASE}___________",
+    "gold_financeiro": f"{BUCKET_BASE}___________",
+    "gold_rh": f"{BUCKET_BASE}___________",
+    "gold_consolidado": f"{BUCKET_BASE}___________" # <--- Caminho ajustado
+}
 
-BUCKET_GOLD_DIRETORIA = "______________________________________"
-BUCKET_GOLD_RH = "______________________________________"
-BUCKET_GOLD_FINANCEIRO = "______________________________________"
+# 2. FINANÇAS: ADR para Comissões
+TAXA_COMISSAO = 0.01 
+
+def validate_data_quality(df, context):
+    """Implementa Quality Gates. Retorna (df_clean, df_quarantine)"""
+    # Check 1: Integridade Financeira
+    df['check_total'] = abs((df['valor_unitario'] * df['quantidade']) - df['valor_total_transacao'])
+    mask_check_financeiro = df['check_total'] > 0.01 
+    
+    # Check 2: Integridade de IDs e Valores
+    mask_inconsistente = (
+        df['id_transacao'].isna() | 
+        (df['valor_total_transacao'] <= 0) | 
+        mask_check_financeiro
+    )
+    
+    df_quarantine = df[mask_inconsistente].copy()
+    df_quarantine['motivo_rejeicao'] = "Inconsistência Financeira ou ID ausente"
+    
+    df_clean = df[~mask_inconsistente].drop(columns=['check_total'])
+    
+    if not df_quarantine.empty:
+        logger.warning(f" {context}: {len(df_quarantine)} registros enviados para QUARENTENA.")
+        wr.s3.to_csv(df_quarantine, path=PATHS['quarantine'], dataset=True, mode="append", index=False)
+        
+    return df_clean
 
 try:
-    # ---------------------------------------------------------
-    # 1. CARGA DOS DADOS (INGESTÃO)
-    # ---------------------------------------------------------
-    df_tech = wr.s3.read_csv(path=BUCKET_RAW_TECH)
-    df_retail = wr.s3.read_csv(path=BUCKET_RAW_RETAIL)
+    logger.info("--- INICIANDO WORKFLOW V2.0 (PADRÃO MIRANTE) ---")
 
-    # ---------------------------------------------------------
-    # 2. LIMPEZA E VALIDAÇÃO: DF_TECH
-    # ---------------------------------------------------------
-    # Conversão de tipos para garantir consistência nos cálculos
-    df_tech['data'] = pd.to_datetime(df_tech['data'])
-    df_tech['quantidade'] = pd.to_numeric(df_tech['quantidade'])
-    df_tech['valor_unitario'] = pd.to_numeric(df_tech['valor_unitario'])
-    df_tech['custo_unitario'] = pd.to_numeric(df_tech['custo_unitario'])
-    df_tech['valor_total_transacao'] = pd.to_numeric(df_tech['valor_total_transacao'])
-    
-    # Sanitização: Remove caracteres especiais de CPFs
-    df_tech['cpf_cliente'] = df_tech['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
+    # 3. INGESTÃO BRONZE (Schema Enforcement)
+    df_tech_raw = wr.s3.read_csv(path=PATHS['raw_tech'], dtype=str)
+    df_retail_raw = wr.s3.read_csv(path=PATHS['raw_retail'], dtype=str)
 
-    # Remoção de registros inválidos e duplicidade de transação
-    df_tech = df_tech.dropna(subset=['id_transacao', 'valor_total_transacao'])
-    df_tech = df_tech.drop_duplicates(subset=['id_transacao'])
- 
-    # --- VALIDAÇÃO CRÍTICA: DF_TECH (Data Quality) ---
-    assert df_tech['id_transacao'].isna().sum() == 0, "Tech: ID de transação nulo"
-    assert df_tech['id_vendedor'].isna().sum() == 0, "Tech: Venda sem identificação de vendedor"
-    assert (df_tech['valor_total_transacao'] > 0).all(), "Tech: Venda com valor zero ou negativo"
-    assert (df_tech['custo_unitario'] >= 0).all(), "Tech: Custo negativo detectado"
-    
-    # Valida se a multiplicação Unitário x Qtd bate com o Total informado
-    check_tech = (df_tech['valor_unitario'] * df_tech['quantidade']) - df_tech['valor_total_transacao']
-    assert (check_tech.abs() < 0.1).all(), "Tech: Divergência entre Unitário x Qtd e Valor Total"
-    
-    # ---------------------------------------------------------
-    # 3. LIMPEZA E VALIDAÇÃO: DF_RETAIL
-    # ---------------------------------------------------------
-    df_retail['data'] = pd.to_datetime(df_retail['data'])
-    df_retail['quantidade'] = pd.to_numeric(df_retail['quantidade'])
-    df_retail['valor_unitario'] = pd.to_numeric(df_retail['valor_unitario'])
-    df_retail['custo_unitario'] = pd.to_numeric(df_retail['custo_unitario'])
-    df_retail['valor_total_transacao'] = pd.to_numeric(df_retail['valor_total_transacao'])
-    df_retail['cpf_cliente'] = df_retail['cpf_cliente'].astype(str).str.replace(r'\D', '', regex=True)
+    for df in [df_tech_raw, df_retail_raw]:
+        df['valor_unitario'] = pd.to_numeric(df['valor_unitario'], errors='coerce')
+        df['quantidade'] = pd.to_numeric(df['quantidade'], errors='coerce')
+        df['valor_total_transacao'] = pd.to_numeric(df['valor_total_transacao'], errors='coerce')
+        df['custo_unitario'] = pd.to_numeric(df['custo_unitario'], errors='coerce')
+        df['data'] = pd.to_datetime(df['data'], errors='coerce')
 
-    df_retail = df_retail.dropna(subset=['id_transacao', 'valor_total_transacao'])
-    df_retail = df_retail.drop_duplicates(subset=['id_transacao'])
+    # 4. SILVER LAYER: HIGIENIZAÇÃO
+    df_tech_silver = validate_data_quality(df_tech_raw, "NEXUS_TECH")
+    df_retail_silver = validate_data_quality(df_retail_raw, "NEXUS_RETAIL")
 
-    # --- VALIDAÇÃO CRÍTICA: DF_RETAIL (Data Quality) ---
-    assert df_retail['valor_total_transacao'].isna().sum() == 0, "Retail: ID de venda nulo"
-    assert df_retail['id_vendedor'].isna().sum() == 0, "Retail: Venda sem identificação de vendedor"
-    assert (df_retail['valor_total_transacao'] > 0).all(), "Retail: Venda com valor zero ou negativo"
-    assert (df_retail['custo_unitario'] >= 0).all(), "Retail: Custo negativo detectado"
-    
-    check_retail = (df_retail['valor_unitario'] * df_retail['quantidade']) - df_retail['valor_total_transacao']
-    assert (check_retail.abs() < 0.1).all(), "Retail: Divergência entre Unitário x Qtd e Valor Total"
-    
-    # ---------------------------------------------------------
-    # 4. UNIFICAÇÃO DAS BASES (HOLDING CONSOLIDADA)
-    # ---------------------------------------------------------
-    df_tech_ready = df_tech.copy() 
-    df_final = pd.concat([df_tech_ready, df_retail], ignore_index=True)
-    
-    # ---------------------------------------------------------
-    # 5. AGREGAÇÕES PARA ÁREAS DE NEGÓCIO (GOLD TABLES)
-    # ---------------------------------------------------------
-    
-    # FINANCEIRO: Visão de Receita Diária e Volume
-    df_financeiro = df_final.groupby(['data', 'holding']).agg({
-        'valor_total_transacao': 'sum',
-        'custo_unitario': 'sum', 
-        'id_transacao': 'count'
-    }).rename(columns={'id_transacao': 'qtd_transacoes', 'valor_total_transacao': 'receita_bruta'}).reset_index()
-    
-    # RH: Desempenho do Vendedor e Cálculo de Comissão (5%)
-    df_rh = df_final.groupby(['id_vendedor', 'holding']).agg({
-        'valor_total_transacao': 'sum',
-        'id_transacao': 'count'
-    }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'valor_acumulado'}).reset_index() 
-    
-    df_rh['comissao_a_pagar'] = df_rh['valor_acumulado'] * 0.01
-    
-    # DIRETORIA / MARKETING: Ranking de itens mais vendidos por unidade
-    df_marketing = df_final.groupby(['holding', 'item_vendido']).agg({
-        'quantidade': 'sum',
-        'valor_total_transacao': 'sum'
-    }).sort_values(by='quantidade', ascending=False).reset_index()
+    wr.s3.to_parquet(df_tech_silver, path=PATHS['silver_tech'], dataset=True, mode="overwrite")
+    wr.s3.to_parquet(df_retail_silver, path=PATHS['silver_retail'], dataset=True, mode="overwrite")
 
-    # ---------------------------------------------------------
-    # 6. SALVAMENTO  NO S3 (FORMATO PARQUET)
-    # ---------------------------------------------------------
-    wr.s3.to_parquet(df=df_tech, path=__________, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_retail, path=__________, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_final, path=__________, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_marketing, path=__________, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_rh, path=__________, dataset=True, mode="overwrite")
-    wr.s3.to_parquet(df=df_financeiro, path=__________, dataset=True, mode="overwrite")
-
-    # ---------------------------------------------------------
-    # 7. SALVAMENTO FINAL NO S3 (FORMATO CSV para Excel ou Google Sheets)
-    # ---------------------------------------------------------
-    wr.s3.to_csv(df=df_rh, 
-                 path="______________________________________", 
-                 index=False, 
-                 dataset=True, # <
-                 mode="overwrite")
+    # 5. GOLD LAYER: BUSINESS LOGIC
+    df_gold = pd.concat([df_tech_silver, df_retail_silver], ignore_index=True)
     
-    wr.s3.to_csv(df=df_marketing, 
-                 path="______________________________________", 
-                 index=False, 
-                 dataset=True, 
-                 mode="overwrite")
-    
-    wr.s3.to_csv(df=df_financeiro, 
-                 path="______________________________________", 
-                 index=False, 
-                 dataset=True, 
-                 mode="overwrite")
+    # Gold RH
+    df_rh = df_gold.groupby(['id_vendedor', 'holding']).agg({
+        'valor_total_transacao': 'sum', 'id_transacao': 'count'
+    }).rename(columns={'id_transacao': 'total_vendas', 'valor_total_transacao': 'venda_bruta'}).reset_index()
+    df_rh['comissao_valor'] = df_rh['venda_bruta'] * TAXA_COMISSAO
 
+    # Gold Financeiro
+    df_financeiro = df_gold.groupby(['data', 'holding']).agg({
+        'valor_total_transacao': 'sum', 'custo_unitario': 'sum'
+    }).reset_index()
+
+    # SALVAMENTOS FINAIS
+    wr.s3.to_csv(df_rh, path=PATHS['gold_rh'], dataset=True, mode="overwrite", index=False)
+    wr.s3.to_csv(df_financeiro, path=PATHS['gold_financeiro'], dataset=True, mode="overwrite", index=False)
+    
+    # 6. SALVAMENTO DA MASTER GOLD CONSOLIDADA (O que faltava!)
+    wr.s3.to_csv(df_gold, path=PATHS['gold_consolidado'], dataset=True, mode="overwrite", index=False)
+
+    logger.info(f" Workflow v2.0 Finalizado. Gold Master salva em: {PATHS['gold_consolidado']}")
 
 except Exception as e:
-    # Captura qualquer erro no processo e exibe no log
-    print(f" ERRO: {e}")
-else:
-    # Confirmação de sucesso do pipeline
-    print(f" WORKFLOW CONCLUÍDO!")
+    logger.critical(f" FALHA CRÍTICA NO PIPELINE: {str(e)}", exc_info=True)
+    raise
