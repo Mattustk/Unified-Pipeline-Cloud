@@ -1,4 +1,4 @@
-# 🚀 Unified Data Pipeline (AWS Edition)
+#  Unified Data Pipeline (AWS Edition)
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
@@ -45,32 +45,24 @@ graph LR
     F --> I[Gold Master: Consolidado]
 ```
 
-ecnologias Utilizadas
-Python 3.11
+##  Tecnologias Utilizadas
 
-AWS S3 (Armazenamento Distribuído)
+* **Python 3.11**
+* **AWS S3** (Armazenamento Distribuído)
+* **AWS DataWrangler** (Integração otimizada com S3)
+* **Pandas** (Motor de transformação)
+* **Logging** (Monitoramento de pipeline)
 
-AWS DataWrangler (Integração otimizada com S3)
+##  Como Executar (Quick Start)
 
-Pandas (Motor de transformação)
-
-Logging (Monitoramento de pipeline)
-
-omo Executar (Quick Start)
-Instale as dependências:
-
+1. **Instale as dependências:**
+```bash
 pip install pandas awswrangler boto3
-
-Configure suas credenciais AWS:
-
-Certifique-se de que seu ambiente está autenticado via AWS CLI (aws configure).
-
-Estrutura do S3:
-O script espera um bucket chamado guilherme-holding com as pastas nexus-tech/raw/ e nexus-retail/raw/.
-
+```
 Execute o Pipeline:
-
+```bash
 python main.py
+```
 
 ## Autor
 Guilherme
