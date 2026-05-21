@@ -1,46 +1,50 @@
 import pytest
 import pandas as pd
 import numpy as np
-# Importa a função REAL do seu arquivo de produção
-from src.pythonmain import validate_data_quality
+# Correção de importação do pacote real de produção
+from src.pythonmain import validate_data_quality, apply_type_casting
 
 @pytest.fixture
-def data_mock():
-    """Cria um DataFrame de teste com casos reais de erro"""
+def base_data_mock():
+    """Cria dados simulados simulando a Camada Bronze (String-Only)"""
     return pd.DataFrame({
-        'id_transacao': ['TRX-001', 'TRX-002', 'TRX-003', 'TRX-004'],
-        'valor_unitario': [100.0, -10.0, 50.0, 200.0],       # Erro no 2 (Negativo)
-        'quantidade': [2, 1, 3, 2],
-        'custo_unitario': [50.0, 5.0, None, 100.0],         # Erro no 3 (Custo Nulo)
-        'valor_total_transacao': [200.0, -10.0, 150.0, 500.0] # Erro no 4 (Cálculo errado: 200*2 != 500)
+        'id_transacao': ['TRX-OK', 'TRX-NULL', 'TRX-NEG', 'TRX-MATH'],
+        'valor_unitario': ['100.0', '50.0', '-10.0', '20.0'],
+        'quantidade': ['2', '2', '5', '3'],
+        'custo_unitario': ['40.0', None, '10.0', '5.0'],
+        'valor_total_transacao': ['200.0', '100.0', '-50.0', '90.0'] # TRX-MATH: 20*3=60, total informado=90
     })
 
-def test_quality_gate_filters_negatives(data_mock):
-    """Garante que valores negativos caiam na quarentena"""
-    df_clean = validate_data_quality(data_mock, "TEST_NEGATIVOS")
+def test_pipeline_end_to_end_quality_gate(base_data_mock):
+    # 1. Executa o casting real de produção
+    df_casted = apply_type_casting(base_data_mock)
     
-    # O TRX-002 deve ter sido removido por ser negativo
-    assert 'TRX-002' not in df_clean['id_transacao'].values
-
-def test_quality_gate_filters_null_costs(data_mock):
-    """Garante que custos nulos não passem para a camada Gold"""
-    df_clean = validate_data_quality(data_mock, "TEST_NULOS")
+    # 2. Executa o gate de qualidade
+    df_clean, df_quarantine = validate_data_quality(df_casted, "AMB_TESTE")
     
-    # O TRX-003 deve ter sido removido (Custo None)
-    assert 'TRX-003' not in df_clean['id_transacao'].values
-    assert df_clean['custo_unitario'].isnull().sum() == 0
-
-def test_quality_gate_validates_math_integrity(data_mock):
-    """Garante que erros de cálculo (Unit x Qtd != Total) sejam interceptados"""
-    df_clean = validate_data_quality(data_mock, "TEST_MATEMATICA")
-    
-    # O TRX-004 (200 * 2 = 400, mas o total era 500) deve ser barrado
-    assert 'TRX-004' not in df_clean['id_transacao'].values
-
-def test_quality_gate_final_count(data_mock):
-    """Garante que apenas o dado 100% correto (TRX-001) sobreviva"""
-    df_clean = validate_data_quality(data_mock, "TEST_FINAL")
-    
-    # Apenas 1 registro deve ser aprovado
+    # VALIDAÇÃO DE SUCESSO
     assert len(df_clean) == 1
-    assert df_clean.iloc[0]['id_transacao'] == 'TRX-001'
+    assert df_clean.iloc[0]['id_transacao'] == 'TRX-OK'
+    
+    # VALIDAÇÃO DE QUARENTENA GRANULAR (O que o Conselho exigiu)
+    assert len(df_quarantine) == 3
+    
+    # Verifica classificação de erro por motivo específico
+    motivos = df_quarantine.set_index('id_transacao')['motivo_rejeicao'].to_dict()
+    assert motivos['TRX-NULL'] == 'CAMPOS_OBRIGATORIOS_NULOS'
+    assert motivos['TRX-NEG'] == 'VALORES_MONETARIOS_NEGATIVOS'
+    assert motivos['TRX-MATH'] == 'DIVERGENCIA_MATEMATICA_PRECO_QTD'
+
+def test_edge_case_math_tolerance():
+    """Testa os limites de borda da validação de ponto flutuante (Delta de 0.05)"""
+    df_edge = pd.DataFrame({
+        'id_transacao': ['TRX-LIMIT-OK', 'TRX-LIMIT-FAIL'],
+        'valor_unitario': [10.0, 10.0],
+        'quantidade': [3, 3],
+        'custo_unitario': [2.0, 2.0],
+        'valor_total_transacao': [30.05, 30.06] # 0.05 passa, 0.06 roda
+    })
+    
+    df_clean, df_quarantine = validate_data_quality(df_edge, "TEST_EDGE")
+    assert 'TRX-LIMIT-OK' in df_clean['id_transacao'].values
+    assert 'TRX-LIMIT-FAIL' in df_quarantine['id_transacao'].values
